@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset='utf-8'>
+    <title>Movimentação</title>
+</head>
+
+<style>
+    canvas {
+        border: solid 1px;
+    }
+</style>
+
+<body>
+    <canvas width="600" height="400"></canvas>
+
+    <script>
+        var cnv = document.querySelector("canvas")
+        var ctx = cnv.getContext("2d")
+
+        var LEFT = 37, UP = 38, RIGHT = 39, DOWN = 40
+        var movLeft = movRight = movUp = movDown = false
+
+        var p1 = {
+            x: 10,
+            y: 10
+        }
+
+    update()
+
+    
+
+        window.addEventListener("keydown", keydownHandler, false)
+        window.addEventListener("keyup", keyupHandler, false)
+
+        function keydownHandler(e) {
+            var key = e.keyCode
+            switch (key) {
+                case UP:
+                    movUp = true
+                    break
+                case DOWN:
+                    movDown = true
+                    break
+                case LEFT:
+                    movLeft = true
+                    break
+                case RIGHT:
+                    movRight = true
+                    break
+            }
+        }
+
+        function keyupHandler(e) {
+            var key = e.keyCode
+            switch (key) {
+                case UP:
+                    movUp = false
+                    break
+                case DOWN:
+                    movDown = false
+                    break
+                case LEFT:
+                    movLeft = false
+                    break
+                case RIGHT:
+                    movRight = false
+                    break
+            }
+        }
+
+        function move() {
+            if (movLeft) {
+                p1.x--
+            }
+            if (movRight) {
+                p1.x++
+            }
+            if (movUp) {
+                p1.y--
+            }
+            if (movDown) {
+                p1.y++
+            }
+        }
+
+        function render() {
+            ctx.clearRect(0, 0, cnv.width, cnv.height)
+            ctx.fillRect(p1.x, p1.y, 50, 50)
+        }
+
+        function update() {
+            requestAnimationFrame(update, cnv)
+            move()
+            render()
+        }
+
+
+    </script>
+</body>
+
+</html>

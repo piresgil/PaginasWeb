@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="pt-pt">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Tennis Game</title>
+</head>
+
+<canvas id="gameCanvas" width="800" height="600"></canvas>
+
+
+<script>
+    /* 
+    * armazena canvas e context
+    */
+    var canvas
+    var canvasContext
+    /* 
+    * armazena valor para eixo x da bola
+    */
+    var ballX = 50
+    var ballSpeedX = 10
+    /* 
+    * armazena valor para eixo y da bola
+    */
+    var ballY = 50
+    var ballSpeedY = 4
+    /* 
+    * armazena valor para paddle 1
+    * armazena const para altura dos paddles
+    */
+    var paddle1Y = 250
+    const PADDLE_HEIGTH = 150
+    /* 
+    * armazena valor para paddle 2
+    * armazena const para espessura dos paddles
+    */
+    var paddle2Y = 250
+    const PADDLE_THICKNESS = 10
+    /* 
+    * armazena scores, e define const para score final
+    */
+    var player1Score = 0
+    var player2Score = 0
+    const WINNING_SCORE = 3
+    /* 
+    * armazena existencia de vencedor
+    */
+    var showingWinScreen = false
+    /* 
+    * funcao que calcula posisao do mouse
+    * 
+    * armazena canvas com o metodo getBoungindClient que vai delimitar o canvas
+    * armazena elementos do documento
+    * armazena posisao x e y para posisao mouse 
+    * => recebe o evento, subtrai a margem esq e top no canvas , e subtrai o scrool do elemento do documento
+    */
+    function calculateMousePos(evt) {
+        var rect = canvas.getBoundingClientRect()
+        var root = document.documentElement
+        var mouseX = evt.clientX - rect.left - root.scrollLeft
+        var mouseY = evt.clientY - rect.top - root.scrollTop
+        return {
+            x: mouseX,
+            y: mouseY
+        }
+    }
+    /* 
+    * Funcao que calcula click do mouse
+    *
+    * testa se existe vencedor
+    * reseta scores e atribui false para variavel de vencedor
+    *
+    */
+    function handleMouseClick(evt) {
+        if (showingWinScreen) {
+            player1Score = 0
+            player2Score = 0
+            showingWinScreen = false
+        }
+    }
+    /* 
+    * função onload, executa quando carrega a pagina
+    *
+    * atribui valores para canavas e context
+    * 
+    * declara framePerSecond(30) para dividir pelo setInterval(1000) recebendo uma funcao in-line, para chamar os metodos
+    * moveEverything(), drawEverything()
+    * 
+    * fica escutando eventos para mouseclik para iniciar e mousemove recebendo uma funcao que calcula a posisao do mouse,
+    * atribuindo ao paddle o valor da posisao.y menos a metade da const da altura do paddle
+    */
+    window.onload = function () {
+
+        canvas = document.getElementById('gameCanvas')
+        canvasContext = canvas.getContext('2d')
+
+        var framePerSecond = 30 // declara aqui porque so vai ser necessaria para calculo
+        setInterval(function () {// funçao in-line
+            moveEverything()
+            drawEverything()
+        }, 1000 / framePerSecond)
+
+        canvas.addEventListener('mousedown', handleMouseClick)
+
+        canvas.addEventListener('mousemove', function (evt) {
+            var mousePos = calculateMousePos(evt)
+            paddle1Y = mousePos.y - (PADDLE_HEIGTH / 2)
+        })
+    }
+    /* 
+    * funcao ballReset(), reseta a bola ao meio do campo
+    *
+    * testa se existe vencedor, ballspeedx recebe o seu negativo(que faz com que a bola mude apenas de sentido),
+    * ballX recebe meio comprimento, e ballY recebe meia altura
+    */
+    function ballReset() {
+
+        if (player1Score >= WINNING_SCORE || player2Score >= WINNING_SCORE) {
+            showingWinScreen = true
+        }
+
+        ballSpeedX = -ballSpeedX
+        ballX = canvas.width / 2
+        ballY = canvas.height / 2
+    }
+    /* 
+    * funcao computerMovement(), movimento do computadr
+    *
+    * armazena valor para paddle2Y mais a altura do paddle para achar o centro do paddle,
+    * 
+    * testa se a bola estiver no eixo y(-10 ou +10) e vai movimentar(incrementar) o paddle2y para a pocisao de eixo y  +10 ou -10
+    */
+    function comuperMovement() {
+        var paddle2YCenter = paddle2Y + (PADDLE_HEIGTH / 2)
+
+        if (paddle2YCenter < ballY - 10) {
+            paddle2Y += 10
+
+        } else if (paddle2YCenter > ballY + 10) {
+            paddle2Y -= 10
+        }
+    }
+    /* 
+    * funcao moveEverything(), 
+    *
+    * testa se existe vencedor
+    * 
+    * chama função coputerMovement()
+    * 
+    * atribui speedBall a bal x e y
+    *
+    * testa se a bola no eixo x estq dentro do canvas, testa tbm se o paddles estam na pocisao,
+    * se estiver atribui o seu negativo, para (bater no paddle e voltar) armazena tambem deltaY,
+    * para que qundo a bola bater acima ou abaixo do meio do paddle, ganhar uma velocidade de 0.35
+    *
+    * testa entao se nao existeirem obstaculos, marca ponto, incrementando score, e corre o ballReset(), para resetar a bola ao meio
+    *
+    * testa se bola no eixo y estiver dentro do canvas, recebe o seu negativo, para (bater no limite e voltar)
+    */
+    function moveEverything() {
+
+        if (showingWinScreen) {
+            return
+        }
+
+        comuperMovement()
+
+        ballX += ballSpeedX
+        ballY += ballSpeedY
+
+        if (ballX < 30) {
+
+            if (ballY > paddle1Y && ballY < paddle1Y + PADDLE_HEIGTH) {
+                ballSpeedX = -ballSpeedX
+
+                var deltaY = ballY - (paddle1Y + PADDLE_HEIGTH / 2)
+                ballSpeedY = deltaY * 0.35
+            } else if (ballX < 0) {
+                player2Score++
+                ballReset()
+            }
+        }
+        if (ballX > canvas.width - 30) {
+
+            if (ballY > paddle2Y && ballY < paddle2Y + PADDLE_HEIGTH) {
+                ballSpeedX = -ballSpeedX
+
+                var deltaY = ballY - (paddle2Y + PADDLE_HEIGTH / 2)
+                ballSpeedY = deltaY * 0.35
+            } else if (ballX > canvas.width) {
+                player1Score++
+                ballReset()
+            }
+        }
+        if (ballY < 0) {
+            ballSpeedY = -ballSpeedY
+        }
+
+        if (ballY > canvas.height) {
+            ballSpeedY = -ballSpeedY
+        }
+    }
+    /* 
+    * funco que imprime rede
+    *
+    * 
+    */
+    function drawNet() {
+        for (var i = 0; i < canvas.height; i += 40) {
+            colorRect(canvas.width / 2 - 1, i, 2, 20, 'white')
+        }
+    }
+    /* 
+    * funcao que imprime tudo
+    * 
+    * imprime rectangulo para canvas
+    *
+    * testa se existe vencedor: imprime em cor branco o vencedor
+    *
+    * imprime rede
+    * 
+    *imprime paddles, ball e scores,
+    */
+    function drawEverything() {
+
+        //print sreen game
+        colorRect(0, 0, canvas.width, canvas.height, 'black')
+
+        if (showingWinScreen) {
+            canvasContext.fillStyle = 'white'
+            if (player1Score >= WINNING_SCORE) {
+                canvasContext.fillText("LEFT Player won", 350, 200)
+            }
+            if (player2Score >= WINNING_SCORE) {
+                canvasContext.fillText("RIGHT Player won", 350, 200)
+            }
+
+            canvasContext.fillText("click to continue", 350, 500)
+            return
+        }
+
+        drawNet()
+
+        //print left paddle player paddle
+        colorRect(10, paddle1Y, PADDLE_THICKNESS, PADDLE_HEIGTH, 'white')
+
+        //print rigth paddle computer paddle
+        colorRect(canvas.width - PADDLE_THICKNESS - 10, paddle2Y, PADDLE_THICKNESS, PADDLE_HEIGTH, 'white')
+
+        //print ball
+        colorCircle(ballX, ballY, PADDLE_THICKNESS, 'white')
+
+        canvasContext.fillText(player1Score, 100, 100)
+        canvasContext.fillText(player2Score, canvas.width - 100, 100)
+    }
+    /* 
+    * funcao para colorir circulo
+    */
+    function colorCircle(centerX, centerY, radius, drawColor) {//centroX,centroY,raio,cor
+        canvasContext.fillStyle = drawColor
+        canvasContext.beginPath()
+        canvasContext.arc(centerX, centerY, radius, 0, Math.PI * 2, true)
+        canvasContext.fill()
+
+    }
+    /* 
+    * Funçao para colorir rectangulo
+    */
+    function colorRect(leftX, topY, width, height, drawColor) {//esq,top,largura,comprimento,cor
+        canvasContext.fillStyle = drawColor
+        canvasContext.fillRect(leftX, topY, width, height)
+    }
+</script>
+
+</html>
